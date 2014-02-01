@@ -209,9 +209,9 @@ class SolidPyObj(object):
         if self.debug:
             modStr += "#"
         if self.disable:
-            modStr += "!"
-        if self.root:
             modStr += "*"
+        if self.root:
+            modStr += "!"
         OSCstr = +self.tabLvl * Defaults.tab + modStr + OSCstr
 
         OSCstr += protoStr
