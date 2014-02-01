@@ -51,7 +51,10 @@ class SolidPyObj(object):
 #ToDo add __str__ to Solid object model
 
     def __add__(self, solidObj1):
-            """a=x+y calls x.__add__(y)->a"""
+            """a=x+y (union)"""
+            self = self.copy()
+            soildObj1 = solidObj1.copy()
+
             if isinstance(self, Union):
                 self.add(solidObj1)
                 return self
@@ -64,6 +67,10 @@ class SolidPyObj(object):
                 return newUnion
 
     def __sub__(self, solidObj1):
+            """a=x-y (difference)"""
+            self = self.copy()
+            soildObj1 = solidObj1.copy()
+
             if isinstance(self, Difference):
                 self.add(solidObj1)
                 return self
@@ -72,6 +79,10 @@ class SolidPyObj(object):
                 return newDifference
 
     def __mul__(self, solidObj1):
+            """a=x*y (intersection)"""
+            self = self.copy()
+            soildObj1 = solidObj1.copy()
+
             if isinstance(self, Intersection):
                 self.add(solidObj1)
                 return self
@@ -85,14 +96,17 @@ class SolidPyObj(object):
     # some convenience unary operators (- = disable, + = background, ~ = debug)
 
     def __neg__(self):
+      self = self.copy()
       self.disable = True
       return self
 
     def __pos__(self):
+      self = self.copy()
       self.background = True
       return self
 
     def __invert__(self):
+      self = self.copy()
       self.debug = True
       return self
 
@@ -109,6 +123,8 @@ class SolidPyObj(object):
 
     def rotate(self, x, y = None, z = None, v = None):
         """Puts a rotate transform on the transform stack"""
+        self = self.copy()
+
         rStr = ""
         if type(x) == list:
             loc = x
@@ -143,6 +159,8 @@ class SolidPyObj(object):
 
     def scale(self, x, y = None, z = None):
         """Puts a scale transform on the transform stack"""
+        self = self.copy()
+
         if type(x) == list:
             loc = x
         else:
@@ -150,9 +168,9 @@ class SolidPyObj(object):
                 loc = [x, x, x]
             else:
                 loc = [x, y, z]
-            x, y, z = loc
-            rStr = "scale([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
-            self._transformStack.append(rStr)
+        x, y, z = loc
+        rStr = "scale([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
+        self._transformStack.append(rStr)
 
         return self
 
@@ -161,7 +179,8 @@ class SolidPyObj(object):
         Puts a translate transform on the transform stack
         translate( [x,y,z]) or translate(x,y,z)
         translate (1) -> [1,1,1]
-    """
+        """
+        self = self.copy()
 
         if type(x) == list:
             loc = x
@@ -182,6 +201,8 @@ class SolidPyObj(object):
         mirror( [x,y,z]) or mirror(x,y,z)
         mirror (1) -> [1,1,1]
         """
+        self = self.copy()
+
         if type(x) == list:
             loc = x
         else:
@@ -191,7 +212,6 @@ class SolidPyObj(object):
                 loc = [x, y, z]
         x, y, z = loc
         rStr = "mirror([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
-
         self._transformStack.append(rStr)
 
         return self
@@ -199,12 +219,16 @@ class SolidPyObj(object):
     def multmatrix(self, m):
         """Puts a multmatrix transform on the transform stack
         *** not tested ***"""
+        self = self.copy()
+
         rStr = "multmatrix(%s)" % str(m)
         self._transformStack.append(rStr)
 
         return self
 
     def color(self, color = "yellow", alpha = 1.0):
+        self = self.copy()
+
         if type(color) == str:
             rStr = 'color("%s", %s)' % (color, str(alpha))
 
