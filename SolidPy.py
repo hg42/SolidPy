@@ -126,6 +126,8 @@ class SolidPyObj(object):
             rStr = "rotate(%s)" % str(loc)
         self._transformStack.append(rStr)
 
+        return self
+
     def release(self):
 
 #        if isinstance(self.parent, Difference):
@@ -152,6 +154,8 @@ class SolidPyObj(object):
             rStr = "scale([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
             self._transformStack.append(rStr)
 
+        return self
+
     def translate(self, x, y = None, z = None):
         """
         Puts a translate transform on the transform stack
@@ -171,6 +175,8 @@ class SolidPyObj(object):
         rStr = "translate([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
         self._transformStack.append(rStr)
 
+        return self
+
     def mirror(self, x, y = None, z = None):
         """Puts a mirror transform on the transform stack
         mirror( [x,y,z]) or mirror(x,y,z)
@@ -188,11 +194,15 @@ class SolidPyObj(object):
 
         self._transformStack.append(rStr)
 
+        return self
+
     def multmatrix(self, m):
         """Puts a multmatrix transform on the transform stack
         *** not tested ***"""
         rStr = "multmatrix(%s)" % str(m)
         self._transformStack.append(rStr)
+
+        return self
 
     def color(self, color = "yellow", alpha = 1.0):
         if type(color) == str:
@@ -208,6 +218,8 @@ class SolidPyObj(object):
         if type(color) == list:
             rStr = 'color(%s, %s)' % (str(color), str(alpha))
             self._transformStack.append(rStr)
+
+        return self
 
     def OSCString(self, protoStr):
         """Returns the OpenSCAD string to make the object"""
