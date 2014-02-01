@@ -82,6 +82,20 @@ class SolidPyObj(object):
                 newIntersection = Intersection(self, solidObj1)
                 return newIntersection
 
+    # some convenience unary operators (- = disable, + = background, ~ = debug)
+
+    def __neg__(self):
+      self.disable = True
+      return self
+
+    def __pos__(self):
+      self.background = True
+      return self
+
+    def __invert__(self):
+      self.debug = True
+      return self
+
     def copy(self):
         X = copy.deepcopy(self)
 
