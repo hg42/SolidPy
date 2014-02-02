@@ -533,21 +533,16 @@ class DXF_linear_extrude(SolidPyObj):
 class CGS(SolidPyObj):
     """Generic class that other CGS classes inherit from. Will accept
     lists or individual solid objects."""
-    def __init__(self, solidObj1, solidObj2):
+    def __init__(self, *args):
         SolidPyObj.__init__(self)
         self.children = []
 
-        if type(solidObj1) == list:
-            for solid in solidObj1:
-                self.add(solid)
-        elif solidObj1:
-            self.add(solidObj1)
-
-        if type(solidObj2) == list:
-            for solid in solidObj2:
-                self.add(solid)
-        elif solidObj2:
-            self.add(solidObj2)
+        for solidObj1 in args:
+          if type(solidObj1) == list:
+              for solid in solidObj1:
+                  self.add(solid)
+          elif solidObj1:
+              self.add(solidObj1)
 
     def add(self, solidObj1):
 
@@ -576,41 +571,37 @@ class CGS(SolidPyObj):
         return self.OSCString(protoStr + childrenStr)
 
 class Union(CGS):
-    def __init__(self, solidObj1 = None, solidObj2 = None):
-
-        CGS.__init__(self, solidObj1, solidObj2)
+    def __init__(self, *args):
+        CGS.__init__(self, *args)
 
 
     def renderOSC(self):
         return CGS.renderOSC(self, "union() {\n")
 
 class Difference(CGS):
-    def __init__(self, solidObj1 = None, solidObj2 = None):
-        CGS.__init__(self, solidObj1, solidObj2)
+    def __init__(self, *args):
+        CGS.__init__(self, *args)
 
     def renderOSC(self):
         return CGS.renderOSC(self, "difference() {\n")
 
 class Intersection(CGS):
-    def __init__(self, solidObj1 = None, solidObj2 = None):
-
-        CGS.__init__(self, solidObj1, solidObj2)
+    def __init__(self, *args):
+        CGS.__init__(self, *args)
 
     def renderOSC(self):
         return CGS.renderOSC(self, "intersection() {\n")
 
 class Minkowski(CGS):
-    def __init__(self, solidObj1 = None, solidObj2 = None):
-
-        CGS.__init__(self, solidObj1, solidObj2)
+    def __init__(self, *args):
+        CGS.__init__(self, *args)
 
     def renderOSC(self):
         return CGS.renderOSC(self, "minkowski() {\n")
 
 class Hull(CGS):
-    def __init__(self, solidObj1 = None, solidObj2 = None):
-
-        CGS.__init__(self, solidObj1, solidObj2)
+    def __init__(self, *args):
+        CGS.__init__(self, *args)
 
     def renderOSC(self):
         return CGS.renderOSC(self, "hull() {\n")
@@ -670,9 +661,8 @@ def writeSCADfile(fileName, *args):
 
 def main():
 
-    Use("ring.scad")
-
-    g = Module("ring", 5, 5, 10)
+    Use("Rachet Tooth.scad")
+    g = Module("rachetTooth", ht = 1, thk=8, ra = 16, ba = 80)
 
     writeSCADfile('solidPy.scad', g)
 
