@@ -196,6 +196,8 @@ class SolidPyObj(object):
 
         return self
 
+    move = translate    # alias
+
     def mirror(self, x, y = None, z = None):
         """Puts a mirror transform on the transform stack
         mirror( [x,y,z]) or mirror(x,y,z)
