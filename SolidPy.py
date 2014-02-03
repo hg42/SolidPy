@@ -52,8 +52,8 @@ class SolidPyObj(object):
 
     def __add__(self, solidObj1):
             """a=x+y (union)"""
-            self = self.copy()
-            soildObj1 = solidObj1.copy()
+            self      = self.copy()
+            solidObj1 = solidObj1.copy()
 
             if isinstance(self, Union):
                 self.add(solidObj1)
@@ -68,8 +68,8 @@ class SolidPyObj(object):
 
     def __sub__(self, solidObj1):
             """a=x-y (difference)"""
-            self = self.copy()
-            soildObj1 = solidObj1.copy()
+            self      = self.copy()
+            solidObj1 = solidObj1.copy()
 
             if isinstance(self, Difference):
                 self.add(solidObj1)
@@ -80,8 +80,8 @@ class SolidPyObj(object):
 
     def __mul__(self, solidObj1):
             """a=x*y (intersection)"""
-            self = self.copy()
-            soildObj1 = solidObj1.copy()
+            self      = self.copy()
+            solidObj1 = solidObj1.copy()
 
             if isinstance(self, Intersection):
                 self.add(solidObj1)
