@@ -654,14 +654,26 @@ def writeSCADfile(fileName, *args):
     outF.write(theStr)
     outF.close
 
+
+
+def hull_path(*args):
+  args = list(args)
+  last = args.pop(0)
+  if len(args) == 0:
+    return last
+  hulls = []
+  while len(args) > 0:
+    this = args.pop(0)
+    hulls.append(Hull(last, this))
+    last = this
+  return Union(hulls)
+
 def main():
 
-    Use("Rachet Tooth.scad")
-    g = Module("rachetTooth", ht = 1, thk=8, ra = 16, ba = 80)
+    parts = hull_path(Sphere(1), Sphere(1).move(10,20,0), Sphere(1).move(0,50,20), Sphere(1).move(10,0,20))
 
-    writeSCADfile('solidPy.scad', g)
-
-    print g.renderOSC()
+    writeSCADfile("/tmp/test.scad", parts)
+    print parts.renderOSC()
 
 
 if __name__ == '__main__':
