@@ -118,8 +118,13 @@ class SolidPyObj(object):
             Defaults.colorCnt += 1
         return X
 
-    def setTabLvl(self, lvl):
-        self.tabLvl = lvl
+    def getTabLvl(self):
+        here = self
+        lvl = 0
+        while here.parent != None:
+          lvl += 1
+          here = here.parent
+        return lvl
 
     def rotate(self, x, y = None, z = None, v = None):
         """Puts a rotate transform on the transform stack"""
@@ -151,11 +156,9 @@ class SolidPyObj(object):
 #            Defaults.augList.remove(self)
 #            self.color("yellow", 1)
 
-
         if self.parent != None:
             self.parent.children.remove(self)
             self.parent = None
-            self.tabLvl = 0
 
     def scale(self, x, y = None, z = None):
         """Puts a scale transform on the transform stack"""
@@ -264,7 +267,7 @@ class SolidPyObj(object):
             modStr += "*"
         if self.root:
             modStr += "!"
-        OSCstr = +self.tabLvl * Defaults.tab + modStr + OSCstr
+        OSCstr = +self.getTabLvl() * Defaults.tab + modStr + OSCstr
 
         OSCstr += protoStr
 
@@ -440,7 +443,7 @@ class Circle(SolidPyObj):
         self.r = r
 
     def renderOSC(self):
-        protoStr = "" + self.tabLvl * Defaults.tab
+        protoStr = "" + self.getTabLvl() * Defaults.tab
         protoStr += "circle(r = %s" % self.r
         if self.fn:
             protoStr += ", $fn=%s" % self.fn
@@ -549,7 +552,6 @@ class CGS(SolidPyObj):
     def add(self, solidObj1):
 
         solidObj1.release()
-        solidObj1.setTabLvl(self.tabLvl + 1)
         solidObj1.parent = self
 
 #        if isinstance(self, Difference) and len(self.children) > 0:
@@ -559,23 +561,17 @@ class CGS(SolidPyObj):
 
         self.children.append(solidObj1)
 
-    def setTabLvl(self, lvl):
-        self.tabLvl = lvl
-        for child in self.children:
-            child.setTabLvl(lvl + 1)
-
     def renderOSC(self, protoStr):
         childrenStr = ""
         for child in self.children:
             childrenStr += child.renderOSC()
-        childrenStr += self.tabLvl * Defaults.tab + "}\n"
+        childrenStr += self.getTabLvl() * Defaults.tab + "}\n"
 
         return self.OSCString(protoStr + childrenStr)
 
 class Union(CGS):
     def __init__(self, *args):
         CGS.__init__(self, *args)
-
 
     def renderOSC(self):
         return CGS.renderOSC(self, "union() {\n")
@@ -615,12 +611,12 @@ class Module(SolidPyObj):
         SolidPyObj.__init__(self)
 
     def renderOSC(self):
-        protoStr = "" + self.tabLvl * Defaults.tab
+        protoStr = "" + self.getTabLvl() * Defaults.tab
         protoStr += self.name + "("
         cnt = 0
         for kws in self.kwargs:
             if cnt > 0:
-                protoStr += ", \n" + (1 + self.tabLvl) * Defaults.tab
+                protoStr += ", \n" + (1 + self.getTabLvl()) * Defaults.tab
             protoStr += "%s = %s" % (kws, self.kwargs[kws])
             cnt += 1
         protoStr += ");"
@@ -652,7 +648,7 @@ def writeSCADfile(fileName, *args):
 
     if Defaults.augment:
         for item in Defaults.augList:
-            if item.tabLvl < 2:
+            if item.getTabLvl() < 2:
                 item.color("red", 0.25)
                 item.comment += " (from Augmentation)"
                 theStr += item.renderOSC() + "\n"
