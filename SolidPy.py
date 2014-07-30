@@ -262,7 +262,7 @@ class SolidPyObj(object):
             modStr += "*"
         if self.root:
             modStr += "!"
-        OSCstr = +self.getTabLvl() * Defaults.tab + modStr + OSCstr
+        OSCstr = "" + self.getTabLvl() * Defaults.tab + modStr + OSCstr
 
         OSCstr += protoStr
 
@@ -562,7 +562,7 @@ class CGS(SolidPyObj):
         childrenStr = ""
         for child in self.children:
             childrenStr += child.renderOSC()
-        childrenStr += self.getTabLvl() * Defaults.tab + "}\n"
+        childrenStr += "" + self.getTabLvl() * Defaults.tab + "}\n"
 
         return self.OSCString(protoStr + childrenStr)
 
