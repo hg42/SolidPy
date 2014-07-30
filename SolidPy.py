@@ -43,7 +43,6 @@ class SolidPyObj(object):
         self.background = False
         self.debug = False
         self.comment = ""
-        self.tabLvl = 0
         if Defaults.autoColor:
             self.color(Defaults.colors[Defaults.colorCnt % len(Defaults.colors)])
             Defaults.colorCnt += 1
