@@ -57,13 +57,11 @@ class SolidPyObj(object):
             if isinstance(self, Union):
                 self.add(solidObj1)
                 return self
-
-            elif isinstance(solidObj1, Union):
-                solidObj1.add(self)
-                return solidObj1
-            else:
-                newUnion = Union(self, solidObj1)
-                return newUnion
+            #if isinstance(solidObj1, Union):
+            #    solidObj1.add(self)
+            #    return solidObj1
+            newUnion = Union(self, solidObj1)
+            return newUnion
 
     def __sub__(self, solidObj1):
             """a=x-y (difference)"""
@@ -73,9 +71,8 @@ class SolidPyObj(object):
             if isinstance(self, Difference):
                 self.add(solidObj1)
                 return self
-            else:
-                newDifference = Difference(self, solidObj1)
-                return newDifference
+            newDifference = Difference(self, solidObj1)
+            return newDifference
 
     def __mul__(self, solidObj1):
             """a=x*y (intersection)"""
@@ -88,9 +85,8 @@ class SolidPyObj(object):
             if isinstance(solidObj1, Intersection):
                 solidObj1.add(self)
                 return solidObj1
-            else:
-                newIntersection = Intersection(self, solidObj1)
-                return newIntersection
+            newIntersection = Intersection(self, solidObj1)
+            return newIntersection
 
     # some convenience unary operators (- = disable, + = background, ~ = debug)
 
@@ -549,6 +545,8 @@ class CGS(SolidPyObj):
               self.add(solidObj1)
 
     def add(self, solidObj1):
+
+        solidObj1 = solidObj1.copy()
 
         solidObj1.release()
         solidObj1.parent = self
