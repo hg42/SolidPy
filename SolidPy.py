@@ -1,3 +1,27 @@
+
+"""
+  TODO:
+    Render      render(convexity=...) obj
+    Offset      offset(delta = 10, join_type = "bevel|round|miter", [miter_limit=double])
+    Surface     surface(file = "surface.dat", center = true, convexity = 5);
+                surface(file = "example010.dat", center = true, convexity = 5);
+                surface(file = "smiley.png", center = true, invert = true);
+    Echo
+
+    $t
+
+    $vpr shows rotation
+    $vpt shows translation (i.e. won't be affected by rotate and zoom)
+    $vpd shows the camera distance [Note: Requires version 2014.QX(see [1])]
+        update at rendering time (e.g. animation but not interactive)
+
+    version() and version_num()
+    parent_module(n) and $parent_modules
+
+    showDiff: call renderOSC with special parameter?
+              only use transform and negative objects
+"""
+
 import copy
 
 def inches(x):
@@ -12,22 +36,22 @@ def boolStr(abool):
         return "false"
 
 class Defaults(object):
-    tab = " " * 4
+
+    tab = " " * 2
     includeFiles = []
     fs = None
     fn = None
     fa = None
     autoColor = False
-    augment = False
-    diffColor = ["red", 0.25] #for augmentation of difference(){}
+    showDiff = False
+    diffColor = ["yellow", 0.25]
     colors = ["blue", "green", "orange", "yellow", "SpringGreen",
-            "purple", "DarkOrchid", "MistyRose"]
+              "purple", "DarkOrchid",   "MistyRose"]
 ##resistor color codes good for troubleshooting...?
 ##    colors=["black","brown","red","orange","yellow","green",
 ##            "blue","purple","grey","white"]
 
     colorCnt = 0
-    augList = []
 
 def Use(fileName):
     Defaults.includeFiles.append(fileName)
@@ -36,243 +60,278 @@ def Use(fileName):
 class SolidPyObj(object):
 
     def __init__(self):
-        self._transformStack = []
-        self.root = False
-        self.disable = False
-        self.parent = None
-        self.background = False
-        self.debug = False
-        self.comment = ""
+        self.children = []
+
+    def clone(self):
+        return copy.deepcopy(self)
+
+    def add(self, obj):
+        #obj = obj.clone()
+        #obj.release()
+
+        if isinstance(obj, list):
+            obj = Union(obj)
+
+        self.children.append(obj)
+
+    def autoColor(self):
         if Defaults.autoColor:
-            self.color(Defaults.colors[Defaults.colorCnt % len(Defaults.colors)])
             Defaults.colorCnt += 1
+            self = self.color(Defaults.colors[Defaults.colorCnt % len(Defaults.colors)], 0.75)
+        return self
 
-#ToDo add __str__ to Solid object model
+    def getTabLvl(self):
+        here = self
+        lvl = 0
+        #while here.parent != None:
+        #  lvl += 1
+        #  here = here.parent
+        return lvl
 
-    def __add__(self, solidObj1):
+    def getTab(self, add=0):
+        return (self.getTabLvl() + add) * Defaults.tab
+
+    #ToDo add __str__ to Solid object model
+
+    def __add__(self, obj):
             """a=x+y (union)"""
-            self      = self.copy()
-            solidObj1 = solidObj1.copy()
-
+            if isinstance(obj, list):
+                obj = Union(obj)
             if isinstance(self, Union):
-                self.add(solidObj1)
+                self.add(obj)
                 return self
-            #if isinstance(solidObj1, Union):
-            #    solidObj1.add(self)
-            #    return solidObj1
-            newUnion = Union(self, solidObj1)
+            if isinstance(obj, Union):            # commutative
+                obj.add(self)
+                return obj
+            newUnion = Union(self, obj)
             return newUnion
 
-    def __sub__(self, solidObj1):
+    def __sub__(self, obj):
             """a=x-y (difference)"""
-            self      = self.copy()
-            solidObj1 = solidObj1.copy()
-
             if isinstance(self, Difference):
-                self.add(solidObj1)
+                self.add(obj)
                 return self
-            newDifference = Difference(self, solidObj1)
+            newDifference = Difference(self, obj)
             return newDifference
 
-    def __mul__(self, solidObj1):
+    def __mul__(self, obj):
             """a=x*y (intersection)"""
-            self      = self.copy()
-            solidObj1 = solidObj1.copy()
-
             if isinstance(self, Intersection):
-                self.add(solidObj1)
+                self.add(obj)
                 return self
-            if isinstance(solidObj1, Intersection):
-                solidObj1.add(self)
-                return solidObj1
-            newIntersection = Intersection(self, solidObj1)
+            if isinstance(obj, Intersection):     # commutative
+                obj.add(self)
+                return obj
+            newIntersection = Intersection(self, obj)
             return newIntersection
 
     # some convenience unary operators (- = disable, + = background, ~ = debug)
 
     def __neg__(self):
-      self = self.copy()
-      self.disable = True
-      return self
+      return Disable(self)
 
     def __pos__(self):
-      self = self.copy()
-      self.background = True
-      return self
+      return Background(self)
 
     def __invert__(self):
-      self = self.copy()
-      self.debug = True
-      return self
-
-    def copy(self):
-        X = copy.deepcopy(self)
-
-        if Defaults.autoColor == True:
-            X.color(Defaults.colors[Defaults.colorCnt % len(Defaults.colors)])
-            Defaults.colorCnt += 1
-        return X
-
-    def getTabLvl(self):
-        here = self
-        lvl = 0
-        while here.parent != None:
-          lvl += 1
-          here = here.parent
-        return lvl
+      return Debug(self)
 
     def rotate(self, x, y = None, z = None, v = None):
-        """Puts a rotate transform on the transform stack"""
-        self = self.copy()
-
-        rStr = ""
-        if type(x) == list:
-            loc = x
-        else:
-            if y == None or z == None:
-                loc = [x, x, x]
-            else:
-                loc = [x, y, z]
-            x, y, z = loc
-
-        if v:
-            q, r, s = v
-            rStr = "rotate(a = [%.2f,%.2f,%.2f], v = [%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z, 1.0 * q, 1.0 * r, 1.0 * s)
-        else:
-            rStr = "rotate(%s)" % str(loc)
-        self._transformStack.append(rStr)
-
-        return self
-
-    def release(self):
-
-#        if isinstance(self.parent, Difference):
-#            #No longer a candidate for augmentation
-#            Defaults.augList.remove(self)
-#            self.color("yellow", 1)
-
-        if self.parent != None:
-            self.parent.children.remove(self)
-            self.parent = None
+        return Rotate(self, x, y, z)
 
     def scale(self, x, y = None, z = None):
-        """Puts a scale transform on the transform stack"""
-        self = self.copy()
-
-        if type(x) == list:
-            loc = x
-        else:
-            if y == None or z == None:
-                loc = [x, x, x]
-            else:
-                loc = [x, y, z]
-        x, y, z = loc
-        rStr = "scale([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
-        self._transformStack.append(rStr)
-
-        return self
+        return Scale(self, x, y, z)
 
     def translate(self, x, y = None, z = None):
-        """
-        Puts a translate transform on the transform stack
-        translate( [x,y,z]) or translate(x,y,z)
-        translate (1) -> [1,1,1]
-        """
-        self = self.copy()
-
-        if type(x) == list:
-            loc = x
-        else:
-            if  y == None or z == None:
-                loc = [x, x, x]
-            else:
-                loc = [x, y, z]
-
-        x, y, z = loc
-        rStr = "translate([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
-        self._transformStack.append(rStr)
-
-        return self
+        return Translate(self, x, y, z)
 
     move = translate    # alias
 
     def mirror(self, x, y = None, z = None):
-        """Puts a mirror transform on the transform stack
-        mirror( [x,y,z]) or mirror(x,y,z)
-        mirror (1) -> [1,1,1]
-        """
-        self = self.copy()
-
-        if type(x) == list:
-            loc = x
-        else:
-            if y == None or z == None:
-                loc = [x, x, x]
-            else:
-                loc = [x, y, z]
-        x, y, z = loc
-        rStr = "mirror([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
-        self._transformStack.append(rStr)
-
-        return self
+        return Mirror(self, x, y, z)
 
     def multmatrix(self, m):
-        """Puts a multmatrix transform on the transform stack
-        *** not tested ***"""
-        self = self.copy()
+        return MultMatrix(self, m)
 
-        rStr = "multmatrix(%s)" % str(m)
-        self._transformStack.append(rStr)
+    matrix = multmatrix
 
-        return self
+    def color(self, color = None, alpha = None):
+        return Color(self, color, alpha)
 
-    def color(self, color = "yellow", alpha = 1.0):
-        self = self.copy()
-
-        if type(color) == str:
-            rStr = 'color("%s", %s)' % (color, str(alpha))
-
-            if len(self._transformStack) > 0:
-                if self._transformStack[0].startswith('color'):
-                    self._transformStack.pop(0)
-                    self._transformStack.insert(0, rStr)
-            else:
-                self._transformStack.append(rStr)
-
-        if type(color) == list:
-            rStr = 'color(%s, %s)' % (str(color), str(alpha))
-            self._transformStack.append(rStr)
-
+    def comment(self, text = None):
+        if text:
+            return Comment(self, text)
         return self
 
     def OSCString(self, protoStr):
         """Returns the OpenSCAD string to make the object"""
-        #look for any modifiers
-        OSCstr = ""
+        return protoStr
 
-        for each in self._transformStack:
-            OSCstr = each + " " + OSCstr
 
-        modStr = ""
-        if self.background:
-            modStr += "%"
-        if self.debug:
-            modStr += "#"
-        if self.disable:
-            modStr += "*"
-        if self.root:
-            modStr += "!"
-        OSCstr = "" + self.getTabLvl() * Defaults.tab + modStr + OSCstr
+################################################################################ transforms
 
-        OSCstr += protoStr
+class Transform(SolidPyObj):
 
-        if self.comment != "":
-            OSCstr += " //%s\n" % self.comment
+    def __init__(self, obj):
+        SolidPyObj.__init__(self)
+        self.obj = obj.clone()
+        self.add(obj)
+
+    def renderOSC(self, protoStr):
+        if protoStr:
+            protoStr += " "
         else:
-            OSCstr += "\n"
+            protoStr = ""
+        protoStr += self.obj.renderOSC()
+        return self.OSCString(protoStr)
 
-        return OSCstr
+# background %, debug #, disable *, root !
 
+class Disable(Transform):
+
+    def __init__(self, obj):
+        Transform.__init__(self, obj)
+
+    def renderOSC(self):
+        return Transform.renderOSC(self, "*")
+
+class Debug(Transform):
+
+    def __init__(self, obj):
+        Transform.__init__(self, obj)
+
+    def renderOSC(self):
+        return Transform.renderOSC(self, "#")
+
+class Background(Transform):
+
+    def __init__(self, obj):
+        Transform.__init__(self, obj)
+
+    def renderOSC(self):
+        return Transform.renderOSC(self, "%")
+
+class Root(Transform):
+
+    def __init__(self, obj):
+        Transform.__init__(self, obj)
+
+    def renderOSC(self):
+        return Transform.renderOSC(self, "!")
+
+class Color(Transform):
+
+    def __init__(self, obj, color=None, alpha=None):
+        Transform.__init__(self, obj)
+        self.color = color
+        self.alpha = alpha
+
+    def renderOSC(self):
+
+        if self.color:
+          if type(self.color) == list and not self.alpha:
+              if type(self.color[0]) == str:
+                  self.color, self.alpha = self.color
+          if type(self.color) == list:
+              if self.alpha:
+                  self.color[3] = self.alpha
+              rStr = 'color(%s)' % (str(self.color))
+          elif type(self.color) == str:
+              if self.alpha:
+                  rStr = 'color("%s", %s)' % (self.color, str(self.alpha))
+              else:
+                  rStr = 'color("%s")' % (self.color)
+          else:
+              rStr = 'color(##########should be string or list but is <' + str(self.color) + '> ##########)'
+        else:
+          rStr = None
+
+        return Transform.renderOSC(self, rStr)
+
+class Comment(Transform):
+
+    def __init__(self, obj, text=None):
+        Transform.__init__(self, obj)
+        self.text = text
+
+    def renderOSC(self):
+
+        if self.text:
+            return Transform.renderOSC(self, None) + " // " + self.text
+        return Transform.renderOSC(self, None)
+
+class TransformVec(Transform):
+
+    def __init__(self, obj, x, y=None, z=None):
+        Transform.__init__(self, obj)
+        if type(x) == list:
+            self.vec = x
+        else:
+            if  y == None or z == None:
+                self.vec = [x, x, x]
+            else:
+                self.vec = [x, y, z]
+
+class Scale(TransformVec):
+
+    def __init__(self, obj, x, y=None, z=None):
+        TransformVec.__init__(self, obj, x, y, z)
+
+    def renderOSC(self):
+
+        x, y, z = self.vec
+        rStr = "scale([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
+        return Transform.renderOSC(self, rStr)
+
+class Translate(TransformVec):
+
+    def __init__(self, obj, x, y=None, z=None):
+        TransformVec.__init__(self, obj, x, y, z)
+
+    def renderOSC(self):
+
+        x, y, z = self.vec
+        rStr = "translate([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
+        return Transform.renderOSC(self, rStr)
+
+class Rotate(TransformVec):
+
+    def __init__(self, obj, x, y=None, z=None, v=None):
+        TransformVec.__init__(self, obj, x, y, z)
+        self.v = v
+
+    def renderOSC(self):
+        if self.v:
+            q, r, s = self.v
+            rStr = "rotate(a = [%.2f,%.2f,%.2f], v = [%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z, 1.0 * q, 1.0 * r, 1.0 * s)
+        else:
+            rStr = "rotate(%s)" % str(self.vec)
+        return Transform.renderOSC(self, rStr)
+
+class Mirror(TransformVec):
+
+    def __init__(self, obj, x, y=None, z=None):
+        TransformVec.__init__(self, obj, x, y, z)
+
+    def renderOSC(self):
+
+        x, y, z = self.vec
+        rStr = "mirror([%.2f,%.2f,%.2f])" % (1.0 * x, 1.0 * y, 1.0 * z)
+        return Transform.renderOSC(self, rStr)
+
+class MultMatrix(Transform):
+
+    def __init__(self, obj, m):
+        Transform.__init__(self, obj)
+        self.m = m
+
+    def renderOSC(self):
+        rStr = "multmatrix(%s)" % str(m)
+        return Transform.renderOSC(self, rStr)
+
+Matrix = MultMatrix
+
+################################################################################ objects
 
 class Cube(SolidPyObj):
     """
@@ -290,8 +349,8 @@ class Cube(SolidPyObj):
                 self.size = [x, x, x]
             else:
                 self.size = [x, y, z]
-
         self.center = center
+        #self = self.autoColor()
 
     def renderOSC(self):
         protoStr = "cube(size=%s, center=%s);" % (self.size, boolStr(self.center))
@@ -310,6 +369,7 @@ class Sphere(SolidPyObj):
         self.fa = fa
         self.fs = fs
         self.fn = fn
+        #self = self.autoColor()
 
     def renderOSC(self):
         protoStr = "sphere(r = %s" % str(self.r)
@@ -338,6 +398,7 @@ class Cylinder(SolidPyObj):
         self.fs = fs
         self.fn = fn
         self.center = center
+        #self = self.autoColor()
 
     def renderOSC(self):
         if not self.r2:
@@ -361,20 +422,22 @@ class Polyhedron(SolidPyObj):
         SolidPyObj.__init__(self)
         self.points = points
         self.triangles = triangles
+        #self = self.autoColor()
 
     def renderOSC(self):
         protoStr = ""
-        protoStr += "polyhedron(points = %s,\n triangles = %s);" % (str(self.points), str(self.triangles))
+        protoStr += "polyhedron(points = %s, triangles = %s);" % (str(self.points), str(self.triangles))
         return self.OSCString(protoStr)
 
 class Linear_extrude(SolidPyObj):
-    def __init__ (self, solidObj, height, center = None, convexity = None, twist = None):
+    def __init__(self, obj, height, center = None, convexity = None, twist = None):
         SolidPyObj.__init__(self)
-        self.solidObj = solidObj
+        self.obj = obj
         self.height = height
         self.center = center
         self.convexity = convexity
         self.twist = twist
+        #self = self.autoColor()
 
     def renderOSC(self):
         protoStr = "linear_extrude(height=%s" % self.height
@@ -385,17 +448,17 @@ class Linear_extrude(SolidPyObj):
         if self.twist:
             protoStr += ", twist = %s" % self.twist
         protoStr += ") "
-        protoStr += self.solidObj.renderOSC()
+        protoStr += self.obj.renderOSC()
         return self.OSCString(protoStr)
 
 
 class Rotate_extrude(SolidPyObj):
-    def __init__ (self, solidObj, convexity = None, fn = None):
+    def __init__(self, obj, convexity = None, fn = None):
         SolidPyObj.__init__(self)
-        self.solidObj = solidObj
+        self.obj = obj
         self.convexity = convexity
         self.fn = fn
-
+        #self = self.autoColor()
 
     def renderOSC(self):
         protoStr = "rotate_extrude("
@@ -404,20 +467,22 @@ class Rotate_extrude(SolidPyObj):
         if self.fn:
             protoStr += ", fn = %s" % self.fn
         protoStr += ") "
-        protoStr += self.solidObj.renderOSC()
+        protoStr += self.obj.renderOSC()
         return self.OSCString(protoStr)
+
+################################################################################ Other
 
 ##projection(cut = true)
 class Projection(SolidPyObj):
-    def __init__ (self, solidObj, cut):
+    def __init__(self, obj, cut):
 
         SolidPyObj.__init__(self)
-        self.solidObj = solidObj
+        self.obj = obj
         self.cut = cut
 
     def renderOSC(self):
         protoStr = "projection(cut=%s)" % self.cut
-        protoStr += self.SolidPyObj.renderOSC()
+        protoStr += self.obj.renderOSC()
         return self.OSCString(protoStr)
 
 class Import(SolidPyObj):
@@ -431,6 +496,8 @@ class Import(SolidPyObj):
         return self.OSCString(protoStr)
 
 
+################################################################################ 2D
+
 class Circle(SolidPyObj):
     def __init__(self, r, fn = None):
         SolidPyObj.__init__(self)
@@ -438,7 +505,7 @@ class Circle(SolidPyObj):
         self.r = r
 
     def renderOSC(self):
-        protoStr = "" + self.getTabLvl() * Defaults.tab
+        protoStr = "" + self.getTab()
         protoStr += "circle(r = %s" % self.r
         if self.fn:
             protoStr += ", $fn=%s" % self.fn
@@ -447,6 +514,7 @@ class Circle(SolidPyObj):
 
 class Square(SolidPyObj):
     def __init__(self, x , y = None, center = None):
+        SolidPyObj.__init__(self)
         if type(x) == list:
             self.size = x
         else:
@@ -454,9 +522,6 @@ class Square(SolidPyObj):
                 self.size = [x, x, x]
             else:
                 self.size = [x, y]
-
-        SolidPyObj.__init__(self)
-
         self.center = center
 
     def renderOSC(self):
@@ -510,6 +575,7 @@ class Import_dxf(SolidPyObj):
 class DXF_linear_extrude(SolidPyObj):
     def __init__(self, filename, height, convexity = None, center = None):
         SolidPyObj.__init__(self)
+        self.autoColor()
         self.filename = filename
         self.height = height
         self.convexity = convexity
@@ -528,78 +594,68 @@ class DXF_linear_extrude(SolidPyObj):
         return self.OSCString(protoStr)
 
 
-## CGS Modeling ##
+################################################################################ operations
 
 class CGS(SolidPyObj):
     """Generic class that other CGS classes inherit from. Will accept
     lists or individual solid objects."""
     def __init__(self, *args):
         SolidPyObj.__init__(self)
-        self.children = []
-
-        for solidObj1 in args:
-          if type(solidObj1) == list:
-              for solid in solidObj1:
-                  self.add(solid)
-          elif solidObj1:
-              self.add(solidObj1)
-
-    def add(self, solidObj1):
-
-        solidObj1 = solidObj1.copy()
-
-        solidObj1.release()
-        solidObj1.parent = self
-
-#        if isinstance(self, Difference) and len(self.children) > 0:
-#            color, alpha = Defaults.diffColor
-#            solidObj1.color(color, alpha)
-#            Defaults.augList.append(solidObj1)
-
-        self.children.append(solidObj1)
+        for obj in args:
+          if type(obj) == list:
+              for item in obj:
+                  self.add(item)
+          elif obj:
+              self.add(obj)
 
     def renderOSC(self, protoStr):
         childrenStr = ""
         for child in self.children:
-            childrenStr += child.renderOSC()
-        childrenStr += "" + self.getTabLvl() * Defaults.tab + "}\n"
+            childrenStr += child.getTab() + child.renderOSC() + "\n"
 
-        return self.OSCString(protoStr + childrenStr)
+        return self.OSCString(
+                  protoStr + "\n"
+                  + self.getTab(+1) + "{\n"
+                  + childrenStr
+                  + self.getTab(+1) + "}"
+                  )
 
 class Union(CGS):
     def __init__(self, *args):
         CGS.__init__(self, *args)
 
     def renderOSC(self):
-        return CGS.renderOSC(self, "union() {\n")
+        return CGS.renderOSC(self, "union()")
 
 class Difference(CGS):
     def __init__(self, *args):
         CGS.__init__(self, *args)
 
     def renderOSC(self):
-        return CGS.renderOSC(self, "difference() {\n")
+        return CGS.renderOSC(self, "difference()")
 
 class Intersection(CGS):
     def __init__(self, *args):
         CGS.__init__(self, *args)
 
     def renderOSC(self):
-        return CGS.renderOSC(self, "intersection() {\n")
+        return CGS.renderOSC(self, "intersection()")
 
 class Minkowski(CGS):
     def __init__(self, *args):
         CGS.__init__(self, *args)
 
     def renderOSC(self):
-        return CGS.renderOSC(self, "minkowski() {\n")
+        return CGS.renderOSC(self, "minkowski()")
 
 class Hull(CGS):
     def __init__(self, *args):
         CGS.__init__(self, *args)
 
     def renderOSC(self):
-        return CGS.renderOSC(self, "hull() {\n")
+        return CGS.renderOSC(self, "hull()")
+
+################################################################################ IO
 
 class Module(SolidPyObj):
     def __init__(self, name, **kwargs):
@@ -608,7 +664,7 @@ class Module(SolidPyObj):
         SolidPyObj.__init__(self)
 
     def renderOSC(self):
-        protoStr = "" + self.getTabLvl() * Defaults.tab
+        protoStr = "" + self.getTab()
         protoStr += self.name + "("
         cnt = 0
         for kws in self.kwargs:
@@ -643,18 +699,17 @@ def writeSCADfile(fileName, *args):
         else: # it must be a SolidPyObj here
             theStr += obj.renderOSC() + "\n"
 
-    if Defaults.augment:
-        for item in Defaults.augList:
-            if item.getTabLvl() < 2:
-                item.color("red", 0.25)
-                item.comment += " (from Augmentation)"
-                theStr += item.renderOSC() + "\n"
-
     outF = open(fileName, 'w')
     outF.write(theStr)
     outF.close
 
+    iline = 0
+    for line in theStr.splitlines():
+        iline += 1
+        print("%4d: %s" % (iline, line))
 
+
+################################################################################ main / test
 
 def hull_path(*args):
   args = list(args)
@@ -673,7 +728,6 @@ def main():
     parts = hull_path(Sphere(1), Sphere(1).move(10,20,0), Sphere(1).move(0,50,20), Sphere(1).move(10,0,20))
 
     writeSCADfile("/tmp/test.scad", parts)
-    print parts.renderOSC()
 
 
 if __name__ == '__main__':
