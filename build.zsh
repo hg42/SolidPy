@@ -1,2 +1,3 @@
+#!/bin/zsh
 
-build test.solid.py
+exec build test.solid.py
