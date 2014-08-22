@@ -1,12 +1,13 @@
 
 """
   TODO:
-    Render      render(convexity=...) obj
-    Offset      offset(delta = 10, join_type = "bevel|round|miter", [miter_limit=double])
-    Surface     surface(file = "surface.dat", center = true, convexity = 5);
-                surface(file = "example010.dat", center = true, convexity = 5);
-                surface(file = "smiley.png", center = true, invert = true);
-    Echo
+
+    HG:
+
+      Surface     surface(file = "surface.dat", center = true, convexity = 5);
+                  surface(file = "example010.dat", center = true, convexity = 5);
+                  surface(file = "smiley.png", center = true, invert = true);
+      Echo?
 
     $t
 
@@ -180,6 +181,9 @@ class SolidPyObj(object):
         if text:
             return Comment(self, text)
         return self
+
+    def offset(self, obj, delta, join = None, limit = None):
+        return Offset(self, obj, delta, join, limit)
 
     def OSCString(self, protoStr):
         """Returns the OpenSCAD string to make the object"""
@@ -601,6 +605,26 @@ class Polygon(SolidPyObj):
         protoStr += ");"
         return self.OSCString(protoStr)
 
+################################################################################ 2D ops
+
+class Offset(SolidPyObj):
+    def __init__(self, obj, delta, join = None, limit = None):
+        SolidPyObj.__init__(self)
+        self.obj   = obj
+        self.delta = delta
+        self.join  = join
+        self.limit = limit
+
+    def renderOSC(self, level):
+        protoStr = "offset("
+        protoStr += "delta=%s" % self.delta
+        if self.join:
+            protoStr += ', join_type="%s"' % self.join
+            if self.limit and join=="miter":
+                protoStr += ', miter_limit="%s"' % self.limit
+        protoStr += ") "
+        protoStr += self.obj.renderOSC(level)
+        return self.OSCString(protoStr)
 
 
 class Import_dxf(SolidPyObj):
