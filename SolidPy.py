@@ -136,15 +136,16 @@ class SolidPyObj(object):
             newIntersection = Intersection(self, obj)
             return newIntersection
 
-    # some convenience unary operators (- = disable, + = background, ~ = debug)
-
-    def __neg__(self):
-      return Disable(self)
-
-    def __pos__(self):
-      return Background(self)
+    # universal convenience unary operator ~
 
     def __invert__(self):
+      # ~~~~ = Disable
+      if isinstance(self, Root):       return Disable(self.children[0])
+      # ~~~  = Root
+      if isinstance(self, Background): return Root(self.children[0])
+      # ~~   = Background
+      if isinstance(self, Debug):      return Background(self.children[0])
+      # ~    = Debug
       return Debug(self)
 
     def scale(self, x, y = None, z = None):
