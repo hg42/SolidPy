@@ -170,6 +170,9 @@ class SolidPyObj(object):
 
     matrix = multmatrix
 
+    def render(self, convexity = None):
+        return Render(self, convexity)
+
     def color(self, color = None, alpha = None):
         return Color(self, color, alpha)
 
