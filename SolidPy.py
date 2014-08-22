@@ -405,7 +405,6 @@ class Cube(SolidPyObj):
             else:
                 self.size = [x, y, z]
         self.center = center
-        #self = self.autoColor()
 
     def renderOSC(self, level):
         protoStr = "cube(size=%s, center=%s);" % (self.size, OSC_boolStr(self.center))
@@ -424,7 +423,6 @@ class Sphere(SolidPyObj):
         self.fa = fa
         self.fs = fs
         self.fn = fn
-        #self = self.autoColor()
 
     def renderOSC(self, level):
         protoStr = "sphere(r=%s" % str(self.r)
@@ -453,7 +451,6 @@ class Cylinder(SolidPyObj):
         self.fs = fs
         self.fn = fn
         self.center = center
-        #self = self.autoColor()
 
     def renderOSC(self, level):
         if not self.r2:
@@ -477,7 +474,6 @@ class Polyhedron(SolidPyObj):
         SolidPyObj.__init__(self)
         self.points = points
         self.triangles = triangles
-        #self = self.autoColor()
 
     def renderOSC(self, level):
         protoStr = ""
@@ -492,7 +488,6 @@ class Linear_extrude(SolidPyObj):
         self.center = center
         self.convexity = convexity
         self.twist = twist
-        #self = self.autoColor()
 
     def renderOSC(self, level):
         protoStr = "linear_extrude(height=%s" % self.height
@@ -513,7 +508,6 @@ class Rotate_extrude(SolidPyObj):
         self.obj = obj
         self.convexity = convexity
         self.fn = fn
-        #self = self.autoColor()
 
     def renderOSC(self, level):
         protoStr = "rotate_extrude("
@@ -630,7 +624,6 @@ class Import_dxf(SolidPyObj):
 class DXF_linear_extrude(SolidPyObj):
     def __init__(self, filename, height, convexity = None, center = None):
         SolidPyObj.__init__(self)
-        self.autoColor()
         self.filename = filename
         self.height = height
         self.convexity = convexity
