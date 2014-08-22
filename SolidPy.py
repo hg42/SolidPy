@@ -66,7 +66,10 @@ class SolidPyObj(object):
         return copy.deepcopy(self)
 
     def add(self, obj):
-        #obj = obj.clone()
+        #if obj == self: obj = obj.clone()
+        #print("add", obj, "to", self)
+        #if self.find(obj):
+        #    obj = obj.clone()
         #obj.release()
 
         if isinstance(obj, list):
@@ -80,48 +83,37 @@ class SolidPyObj(object):
             self = self.color(Defaults.colors[Defaults.colorCnt % len(Defaults.colors)], 0.75)
         return self
 
-    def getTabLvl(self):
-        here = self
-        lvl = 0
-        #while here.parent != None:
-        #  lvl += 1
-        #  here = here.parent
-        return lvl
-
-    def getTab(self, add=0):
-        return (self.getTabLvl() + add) * Defaults.tab
-
     #ToDo add __str__ to Solid object model
 
     def __add__(self, obj):
             """a=x+y (union)"""
             if isinstance(obj, list):
                 obj = Union(obj)
-            if isinstance(self, Union):
-                self.add(obj)
-                return self
-            if isinstance(obj, Union):            # commutative
-                obj.add(self)
-                return obj
+            #if isinstance(self, Union):
+            #    self.add(obj)
+            #    return self
+            #if isinstance(obj, Union):            # commutative
+            #    obj.add(self)
+            #    return obj
             newUnion = Union(self, obj)
             return newUnion
 
     def __sub__(self, obj):
             """a=x-y (difference)"""
-            if isinstance(self, Difference):
-                self.add(obj)
-                return self
+            #if isinstance(self, Difference):
+            #    self.add(obj)
+            #    return self
             newDifference = Difference(self, obj)
             return newDifference
 
     def __mul__(self, obj):
             """a=x*y (intersection)"""
-            if isinstance(self, Intersection):
-                self.add(obj)
-                return self
-            if isinstance(obj, Intersection):     # commutative
-                obj.add(self)
-                return obj
+            #if isinstance(self, Intersection):
+            #    self.add(obj)
+            #    return self
+            #if isinstance(obj, Intersection):     # commutative
+            #    obj.add(self)
+            #    return obj
             newIntersection = Intersection(self, obj)
             return newIntersection
 
@@ -174,7 +166,6 @@ class Transform(SolidPyObj):
 
     def __init__(self, obj):
         SolidPyObj.__init__(self)
-        self.obj = obj.clone()
         self.add(obj)
 
     def renderOSC(self, protoStr):
