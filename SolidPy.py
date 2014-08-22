@@ -91,7 +91,7 @@ class SolidPyObj(object):
         #    obj = obj.clone()
         #obj.release()
 
-        if isinstance(obj, list):
+        if isinstance(obj, (list, tuple)):
             obj = Union(obj)
 
         self.children.append(obj)
@@ -106,7 +106,7 @@ class SolidPyObj(object):
 
     def __add__(self, obj):
             """a=x+y (union)"""
-            if isinstance(obj, list):
+            if isinstance(obj, (list, tuple)):
                 obj = Union(obj)
             #if isinstance(self, Union):
             #    self.add(obj)
@@ -207,7 +207,7 @@ class TransformVec(Transform):
 
     def __init__(self, obj, x, y=None, z=None):
         Transform.__init__(self, obj)
-        if type(x) == list:
+        if isinstance(x, list):
             self.vec = x
         else:
             if  y == None or z == None:
@@ -398,7 +398,7 @@ class Cube(SolidPyObj):
 ##    def __init__(self, size = [1,1,1], center = False)
     def __init__(self, x, y = None, z = None, center = None):
         SolidPyObj.__init__(self)
-        if type(x) == list:
+        if isinstance(x, list):
             self.size = x
         else:
             if y == None:
@@ -565,7 +565,7 @@ class Circle(SolidPyObj):
 class Square(SolidPyObj):
     def __init__(self, x , y = None, center = None):
         SolidPyObj.__init__(self)
-        if type(x) == list:
+        if isinstance(x, list):
             self.size = x
         else:
             if y == None:
@@ -651,7 +651,7 @@ class CGS(SolidPyObj):
     def __init__(self, *args):
         SolidPyObj.__init__(self)
         for obj in args:
-          if type(obj) == list:
+          if isinstance(obj, (list, tuple)):
               for item in obj:
                   self.add(item)
           elif obj:
@@ -749,7 +749,7 @@ def writeSCADfile(fileName, *args):
     theStr += '\n'
 
     for obj in args:
-        if type(obj) == list: # A list of SolidPyObj
+        if isinstance(obj, (list, tuple)): # a collection of SolidPyObj
             for item in obj:
                 theStr += item.renderOSC(0) + "\n"
         else: # it must be a SolidPyObj here
