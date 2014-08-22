@@ -395,10 +395,9 @@ class Disable(Transform):
 class Cube(SolidPyObj):
     """
     Cube( [x,y,z],center=True) or Cube( x,y,z,center)
-    size = 1 -> [1,1,1]
+    size = n -> [n,n,n]
     center: If True, object is centered at (0,0,0)
     """
-##    def __init__(self, size = [1,1,1], center = False)
     def __init__(self, x, y = None, z = None, center = None):
         SolidPyObj.__init__(self)
         if isinstance(x, list):
@@ -773,19 +772,20 @@ def writeSCADfile(fileName, *args):
 ################################################################################ main / test
 
 def hull_path(*args):
-  args = list(args)
-  last = args.pop(0)
-  if len(args) == 0:
-    return last
-  hulls = []
-  while len(args) > 0:
-    this = args.pop(0)
-    hulls.append(Hull(last, this))
-    last = this
-  return Union(hulls)
+    args = list(args)
+    last = args.pop(0)
+    if len(args) == 0:
+        return last
+    hulls = []
+    while len(args) > 0:
+        this = args.pop(0)
+        hulls.append(Hull(last, this))
+        last = this
+    return Union(hulls)
 
 def main():
 
+    #parts = Cube(100, 200, 300)
     parts = hull_path(Sphere(1), Sphere(1).move(10,20,0), Sphere(1).move(0,50,20), Sphere(1).move(10,0,20))
 
     writeSCADfile("/tmp/test.scad", parts)
