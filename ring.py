@@ -1,9 +1,14 @@
 
-from xsolidpy import *
+from solidpy import *
 
-def Ring(h, r1, r3, r2=None, r4=None):
-  if r2 is None:
-    r2 = r1
-  if r4 is None:
-    r4 = r3
-  return Cylinder(h, r1, r2) - Cylinder(h+Dh, r3, r4).move(0,0,-Do)
+#def Ring(h, ra, ri):
+#  return Cylinder(h, ra) - Cylinder(h+Dh, ri).move(0,0,-Do)
+
+def Ring(h, ra1, ri1=None, ra2=None, ri2=None):
+  if ra2 is None:
+    ra2 = ra1
+  if ri1 is None:
+    ri1 = ra1
+  if ri2 is None:
+    ri2 = ri1
+  return Cylinder(h, ra1, ra2) - Cylinder(h+Dh, ri1, ri2).move(0,0,-Do)
