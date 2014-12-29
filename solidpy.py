@@ -801,9 +801,9 @@ class Hull(CGS):
 
 class Module(SolidPyObj):
   def __init__(self, name, **kwargs):
+      SolidPyObj.__init__(self)
       self.name = name
       self.kwargs = kwargs
-      SolidPyObj.__init__(self)
 
   def renderOSC(self, level):
       protoStr = "" + tab(level)
