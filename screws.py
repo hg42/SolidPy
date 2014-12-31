@@ -35,31 +35,31 @@ def DIN_Schraube(standard, hg, hk = None):
   dk = DIN_get_(s, 'dk')
   if hk is None:
     hk = DIN_get_(s, 'hk')
-  return (Cylinder(h = hk, r = dk/2) + Cylinder(h = hg+hk, r = d/2)).move(0, 0, -hk)
+  return (Cylinder(h = hk, r = dk/2) + Cylinder(h = hg+hk+Do, r = d/2)).move(0, 0, -hk-Do)
 
-def DIN_Mutter(standard, hm = None):
+def DIN_Mutter(standard, hm = None, space = 0):
   s = M_std[standard]
   dm = DIN_get_(s, 'dm')
   if hm is None:
     hm = DIN_get_(s, 'hm')
-  return Cylinder(h = hm, r = dm/2, fn = 6).rotate(0, 0, 30)
+  return Cylinder(h = hm, r = dm/2 + space, fn = 6).rotate(0, 0, 30)
 
-def DIN_KopfLoch(standard, hk = None):
+def DIN_KopfLoch(standard, hk = None, space = 0):
   s = M_std[standard]
   dk = DIN_get_(s, 'dk')
   if hk is None:
     hk = DIN_get_(s, 'hk')
-  return Cylinder(h = hk, r = dk/2).move(0, 0, -hk)
+  return Cylinder(h = hk, r = dk/2 + space).move(0, 0, -hk)
 
-def DIN_FreiesLoch(standard, hg):
+def DIN_FreiesLoch(standard, hg, space = 0):
   s = M_std[standard]
   d = DIN_get_(s, 'd')
-  return Cylinder(h = hg, r = d/2)
+  return Cylinder(h = hg, r = d/2 + space)
 
-def DIN_GewindeLoch(standard, hg):
+def DIN_GewindeLoch(standard, hg, space = 0):
   s = M_std[standard]
   di = DIN_get_(s, 'di')
-  return Cylinder(h = hg, r = di/2)
+  return Cylinder(h = hg, r = di/2 + space)
 
 DIN_Screw       = DIN_Schraube
 DIN_Nut         = DIN_Mutter
