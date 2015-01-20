@@ -16,7 +16,7 @@ M_std = {
   "M14": { 'g': 2.00,  'd': 14.0, 'di': 12.0, 'md': 27.0, 'ti': "T70"},
   }
 
-def DIN_get_(s, what):
+def DIN_Screw_get_(s, what):
   try:
     return s[what]
   except:
@@ -26,43 +26,43 @@ def DIN_get_(s, what):
     if what == 'hk': return d
     if what == 'hm': return d*4/5
 
-def DIN_get(standard, what):
-  return DIN_get_(M_std[standard], what)
+def DIN_Screw_get(standard, what):
+  return DIN_Screw_get_(M_std[standard], what)
 
 def DIN_Schraube(standard, hg, hk = None):
   s = M_std[standard]
-  d  = DIN_get_(s, 'd')
-  dk = DIN_get_(s, 'dk')
+  d  = DIN_Screw_get_(s, 'd')
+  dk = DIN_Screw_get_(s, 'dk')
   if hk is None:
-    hk = DIN_get_(s, 'hk')
+    hk = DIN_Screw_get_(s, 'hk')
   return (Cylinder(h = hk, r = dk/2) + Cylinder(h = hg+hk+Do, r = d/2)).move(0, 0, -hk-Do)
 
 def DIN_Mutter(standard, hm = None, space = 0):
   s = M_std[standard]
-  dm = DIN_get_(s, 'dm')
+  dm = DIN_Screw_get_(s, 'dm')
   if hm is None:
-    hm = DIN_get_(s, 'hm')
+    hm = DIN_Screw_get_(s, 'hm')
   return Cylinder(h = hm, r = dm/2 + space, fn = 6).rotate(0, 0, 30)
 
-def DIN_KopfLoch(standard, hk = None, space = 0):
+def DIN_Kopf(standard, hk = None, space = 0):
   s = M_std[standard]
-  dk = DIN_get_(s, 'dk')
+  dk = DIN_Screw_get_(s, 'dk')
   if hk is None:
-    hk = DIN_get_(s, 'hk')
+    hk = DIN_Screw_get_(s, 'hk')
   return Cylinder(h = hk, r = dk/2 + space).move(0, 0, -hk)
 
 def DIN_FreiesLoch(standard, hg, space = 0):
   s = M_std[standard]
-  d = DIN_get_(s, 'd')
+  d = DIN_Screw_get_(s, 'd')
   return Cylinder(h = hg, r = d/2 + space)
 
 def DIN_GewindeLoch(standard, hg, space = 0):
   s = M_std[standard]
-  di = DIN_get_(s, 'di')
+  di = DIN_Screw_get_(s, 'di')
   return Cylinder(h = hg, r = di/2 + space)
 
 DIN_Screw       = DIN_Schraube
 DIN_Nut         = DIN_Mutter
+DIN_Head        = DIN_Kopf
 DIN_ThreadHole  = DIN_GewindeLoch
 DIN_FreeHole    = DIN_FreiesLoch
-DIN_HeadHole    = DIN_KopfLoch
