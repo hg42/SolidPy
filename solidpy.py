@@ -890,10 +890,10 @@ def align(x, step = 0):
   sign = 1 if x >= 0 else -1
   x *= sign
   if step >= 0:
-    return sign*step*int(x/step+1)
+    return sign*int(x/step+0.5)*step
   else:
     step = -step
-    return sign*step*int(x/step)
+    return sign*int(x/step+0.5)*step
 
 if 0:
   show("sin(1.5)")
