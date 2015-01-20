@@ -27,6 +27,7 @@
 from __future__ import print_function
 
 import os
+import glob
 import subprocess
 import re
 import sys
@@ -101,6 +102,13 @@ class Defaults(object):
 
 def tab(level):
   return level * Defaults.tab
+
+def PrintConfig(name = None, value = None):
+  if name is None:
+    for f in glob.glob("config-*.ini"):
+      os.remove(f)
+  else:
+    open("-".join(["config", str(name), str(value)]) + ".ini", "w").close()
 
 def Use(name):
   #print(dir(sys.modules['solidpy'])); exit()
