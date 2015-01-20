@@ -44,6 +44,12 @@ print(sys.path)
 
 import copy
 
+def show(what):
+  try:
+    print("---", what, " "*max(0, 20-len(what)) + "=", eval(what, script_globals, script_locals))
+  except:
+    print("---", what, " "*max(0, 20-len(what)) + "=", eval(what))
+
 def iround(x):
   return int(round(x))
 
@@ -879,12 +885,6 @@ sqrt2           = sqrt(2)
 
 
 
-
-def show(what):
-  try:
-    print("---", what, " "*max(0, 20-len(what)) + "=", eval(what, script_globals, script_locals))
-  except:
-    print("---", what, " "*max(0, 20-len(what)) + "=", eval(what))
 
 def align(x, step = 0):
   sign = 1 if x >= 0 else -1
